@@ -1,0 +1,15 @@
+{
+  "name": "latex-editor",
+  "version": "1.0.0",
+  "description": "A simple Overleaf-like LaTeX editor",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "tmp": "^0.2.1"
+  },
+  "author": "",
+  "license": "ISC"
+}
