@@ -1,8 +1,10 @@
+require('dotenv').config();
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
 const tmp = require('tmp');
+const fetch = require('node-fetch');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -14,6 +16,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Existing /compile endpoint (unchanged)
 app.post('/compile', (req, res) => {
   const latex = req.body.latex;
 
@@ -93,6 +96,90 @@ app.post('/compile', (req, res) => {
       });
     });
   });
+});
+
+// NEW: Generate Resume LaTeX using Groq API
+app.post('/generate-resume', async (req, res) => {
+  const userData = req.body;
+
+  // Basic validation
+  if (!userData.fullName || !userData.summary) {
+    return res.status(400).json({ error: 'Name and summary are required' });
+  }
+
+  const GROQ_API_KEY = process.env.GROQ_API_KEY;
+
+  if (!GROQ_API_KEY) {
+    return res.status(500).json({ error: 'Groq API key not configured on server' });
+  }
+
+  try {
+    const prompt = `
+You are an expert LaTeX resume writer using the moderncv class (classic style, blue color).
+Generate a complete, valid .tex document for a resume based ONLY on this user information.
+Use \\usepackage{tcolorbox} for boxed sections.
+Use \\href for any links.
+Keep it clean, professional, one-page friendly.
+
+User details:
+
+Full Name: ${userData.fullName}
+Job Title: ${userData.jobTitle || 'Student / Developer'}
+Email: ${userData.email}
+Phone: ${userData.phone}
+Address: ${userData.address}
+
+Summary: ${userData.summary}
+
+Education (parse lines): ${userData.education}
+
+Skills: ${userData.skills}
+
+Projects: ${userData.projects}
+
+Experience: ${userData.experience}
+
+Certifications: ${userData.certifications}
+
+Languages: ${userData.languages}
+
+Output ONLY the full LaTeX code starting from \\documentclass to \\end{document}.
+Do NOT add explanations or markdown.
+    `;
+
+    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-70b-versatile', // or 'mixtral-8x7b-32768', 'gemma2-9b-it', etc.
+        messages: [
+          { role: 'system', content: 'You are a professional LaTeX resume generator.' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.6,
+        max_tokens: 3000,
+        top_p: 0.9
+      })
+    });
+
+    if (!groqResponse.ok) {
+      const err = await groqResponse.text();
+      console.error('Groq error:', err);
+      return res.status(500).json({ error: 'Groq API failed' });
+    }
+
+    const groqData = await groqResponse.json();
+    const generatedLatex = groqData.choices[0].message.content.trim();
+
+    res.json({ latex: generatedLatex });
+
+  } catch (err) {
+    console.error('Generate resume error:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.use((err, req, res, next) => {

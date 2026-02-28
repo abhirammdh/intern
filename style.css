@@ -12,22 +12,24 @@
   --template-bar: #e8e8e8;
   --btn-bg: #e0e0e0;
   --btn-hover: #d0d0d0;
+  --page-bg: #ffffff;
 }
 
-[data-theme="light"] {
+[data-theme="dark"] {
   --bg: #1e1e1e;
-  --editor-bg: #1f1f1f;
+  --editor-bg: #252526;
   --text: #d4d4d4;
   --text-dim: #aaaaaa;
-  --border: #3c3c3c;
-  --accent: #0e639c;
-  --accent-hover: #1177bb;
+  --border: #404040;
+  --accent: #569cd6;
+  --accent-hover: #4ea1e8;
   --status-bg: #007acc;
   --error: #f14c4c;
-  --title-bar: #252526;
+  --title-bar: #1f1f1f;
   --template-bar: #252526;
-  --btn-bg: #333;
-  --btn-hover: #444;
+  --btn-bg: #333333;
+  --btn-hover: #444444;
+  --page-bg: #1e1e1e;
 }
 
 * {
@@ -57,6 +59,8 @@ body {
   font-size: 14px;
   user-select: none;
   justify-content: space-between;
+  flex-shrink: 0;
+  z-index: 10;
 }
 
 .window-controls {
@@ -83,23 +87,38 @@ body {
 }
 
 .menu-bar {
+  display: flex;
+  gap: 20px;
   color: var(--text);
-  opacity: 0.7;
-  font-size: 13px;
-  margin-left: auto;
-  margin-right: 24px;
+  font-size: 14px;
+}
+
+.nav-item {
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.nav-item:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.nav-item.active {
+  background: var(--accent);
+  color: white;
 }
 
 /* Theme switch */
 .theme-switch {
   --toggle-size: 10px;
-  --container-width: 7.8em;
-  --container-height: 3.3em;
-  --container-radius: 8.5em;
+  --container-width: 7em;
+  --container-height: 3em;
+  --container-radius: 7.5em;
   --container-light-bg: #4a90e2;
   --container-night-bg: #0f1423;
-  --circle-container-diameter: 4.4em;
-  --sun-moon-diameter: 2.9em;
+  --circle-container-diameter: 4em;
+  --sun-moon-diameter: 2.6em;
   --sun-bg: #ffdd57;
   --moon-bg: #e0e5ec;
   --spot-color: #a0a8b5;
@@ -258,6 +277,8 @@ body {
   font-size: 15px;
   color: var(--text);
   overflow-x: auto;
+  flex-shrink: 0;
+  z-index: 9;
 }
 
 .template-label {
@@ -279,6 +300,7 @@ body {
   white-space: nowrap;
   min-width: 140px;
   text-align: center;
+  flex-shrink: 0;
 }
 
 .template-btn:hover {
@@ -294,42 +316,99 @@ body {
   transform: translateY(0);
 }
 
-/* Main layout */
+/* Main layout - full height */
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.page {
+  display: none;
+  flex: 1;
+  background: var(--page-bg);
+  overflow: hidden;
+}
+
+.page.active {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Editor + Preview full height */
 .main-layout {
   flex: 1;
   display: flex;
+  overflow: hidden;
 }
 
 .content-area.full-width {
-  width: 100%;
+  flex: 1;
+  display: flex;
 }
 
-/* Split view */
 .split-view {
   flex: 1;
   display: flex;
-  height: calc(100vh - 100px);
+  overflow: hidden;
 }
 
 .editor-panel {
   flex: 1;
   background: var(--editor-bg);
   border-right: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+}
+
+.editor-container {
+  flex: 1;
+  position: relative;
+  display: flex;
+  overflow: hidden;
+}
+
+.line-numbers {
+  width: 50px;
+  background: #f8f8f8;
+  color: #888;
+  font-family: Consolas, monospace;
+  font-size: 15px;
+  text-align: right;
+  padding-top: 20px;
+  padding-right: 8px;
+  line-height: 1.55;
+  white-space: pre;
+  overflow: hidden;
+  user-select: none;
+  pointer-events: none;
+  flex-shrink: 0;
+  border-right: 1px solid #e0e0e0;
+  box-sizing: border-box;
+}
+
+[data-theme="dark"] .line-numbers {
+  background: #2d2d2d;
+  color: #858585;
+  border-right: 1px solid #404040;
 }
 
 #latex-editor {
   width: 100%;
   height: 100%;
-  background: var(--editor-bg);
+  background: transparent;
   color: var(--text);
   border: none;
-  padding: 20px 24px;
+  padding: 20px 32px 20px 16px;
   font-family: Consolas, 'Courier New', monospace;
   font-size: 16px;
   line-height: 1.55;
   resize: none;
   outline: none;
   caret-color: var(--accent);
+  box-sizing: border-box;
 }
 
 /* Preview area */
@@ -338,6 +417,7 @@ body {
   display: flex;
   flex-direction: column;
   background: var(--editor-bg);
+  overflow: hidden;
 }
 
 .preview-tabs {
@@ -346,6 +426,7 @@ body {
   border-bottom: 1px solid var(--border);
   display: flex;
   overflow-x: auto;
+  flex-shrink: 0;
 }
 
 .preview-tab {
@@ -381,10 +462,10 @@ body {
   background: white;
 }
 
-/* Animated buttons for Compile & Download */
+/* Floating buttons */
 .floating-controls {
   position: absolute;
-  top: 60px;
+  top: 70px;
   right: 32px;
   display: flex;
   gap: 20px;
@@ -398,8 +479,8 @@ body {
   --bg-color: #323232;
   --main-color: #dedede;
   position: relative;
-  width: 200px;
-  height: 35px;
+  width: 180px;
+  height: 30px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -456,13 +537,12 @@ body {
   box-shadow: 0px 0px var(--main-color);
 }
 
-/* Compile specific */
+/* Compile & Download colors */
 .compile-btn {
   --main-color: #2d8cf0;
   --font-color: #ffffff;
 }
 
-/* Download specific */
 .download-btn {
   --main-color: #28a745;
   --font-color: #ffffff;
@@ -513,6 +593,55 @@ body {
   border-top: 1px solid var(--border);
   display: none;
   white-space: pre-wrap;
+}
+
+/* Pages */
+.page-content {
+  padding: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+  overflow-y: auto;
+}
+
+.page-content h1 {
+  font-size: 32px;
+  margin-bottom: 24px;
+  color: var(--text);
+}
+
+.page-content h2 {
+  font-size: 24px;
+  margin-bottom: 24px;
+  color: var(--text);
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+  margin: 32px 0;
+}
+
+.team-member {
+  text-align: center;
+  background: rgba(255,255,255,0.05);
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.team-member img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 16px;
+  border: 3px solid var(--accent);
+}
+
+.team-member h3 {
+  font-size: 20px;
+  margin-bottom: 8px;
 }
 
 /* Responsive */
@@ -575,5 +704,243 @@ body {
     height: 50%;
     border-right: none;
     border-bottom: 1px solid var(--border);
+  }
+}
+/* styles.css - Resume with editor-inspired styling */
+
+:root {
+  --bg: #f5f5f5;
+  --card-bg: #ffffff;
+  --text: #1e1e1e;
+  --text-dim: #555555;
+  --border: #d0d0d0;
+  --accent: #0066cc;
+  --accent-hover: #0055aa;
+  --title-bar: #e8e8e8;
+  --btn-bg: #e0e0e0;
+  --btn-hover: #d0d0d0;
+  --error: #d32f2f;
+}
+
+[data-theme="dark"] {
+  --bg: #1e1e1e;
+  --card-bg: #252526;
+  --text: #d4d4d4;
+  --text-dim: #aaaaaa;
+  --border: #404040;
+  --accent: #569cd6;
+  --accent-hover: #4ea1e8;
+  --title-bar: #1f1f1f;
+  --btn-bg: #333333;
+  --btn-hover: #444444;
+  --error: #f14c4c;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 1.5rem;
+  transition: background 0.4s, color 0.4s;
+}
+
+/* Header with title-bar feeling */
+.header {
+  background: var(--title-bar);
+  border-bottom: 1px solid var(--border);
+  padding: 2.5rem 3rem 2rem;
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  position: relative;
+}
+
+.header h1 {
+  font-size: 3.2rem;
+  margin-bottom: 0.4rem;
+}
+
+.header .title {
+  font-size: 1.4rem;
+  color: var(--text-dim);
+  margin-bottom: 1.5rem;
+}
+
+/* Theme switch – reused from your editor */
+.theme-switch {
+  position: absolute;
+  top: 1.5rem;
+  right: 2rem;
+  /* paste your full .theme-switch + children rules here */
+  /* ... (about 120–150 lines – copy from your original code) ... */
+}
+
+/* Main container */
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  background: var(--card-bg);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+/* Content layout */
+.main-content {
+  padding: 3rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3.5rem;
+}
+
+@media (max-width: 960px) {
+  .main-content {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+}
+
+/* Section titles – similar accent style */
+.section-title {
+  font-size: 1.8rem;
+  color: var(--accent);
+  margin-bottom: 1.4rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 3px solid var(--accent);
+  display: inline-block;
+  font-weight: 600;
+}
+
+/* Button style – reused from your floating buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.8rem 1.6rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s;
+  text-decoration: none;
+}
+
+.btn:hover {
+  background: var(--accent-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+}
+
+.btn.print-btn {
+  background: #059669;
+}
+
+.btn.print-btn:hover {
+  background: #047857;
+}
+
+/* Rest of resume styles (skills pills, project cards, etc.) */
+
+.skills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  list-style: none;
+}
+
+.skills-list li {
+  background: rgba(var(--accent), 0.1);
+  color: var(--accent);
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+  font-size: 0.95rem;
+}
+
+.project-card {
+  background: rgba(0,0,0,0.03);
+  padding: 1.6rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  transition: all 0.3s;
+}
+
+[data-theme="dark"] .project-card {
+  background: rgba(255,255,255,0.05);
+}
+
+.project-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.12);
+}
+/* New styles for resume form */
+.user-form-container {
+  padding: 32px;
+  background: var(--editor-bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.user-form-container h2 {
+  font-size: 24px;
+  margin-bottom: 24px;
+  color: var(--accent);
+  text-align: center;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.form-grid .full-width {
+  grid-column: 1 / -1;
+}
+
+.form-grid label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+.form-grid input, .form-grid textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--page-bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 15px;
+  transition: border-color 0.2s;
+}
+
+.form-grid input:focus, .form-grid textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.generate-btn {
+  --main-color: #10b981;
+  --font-color: #ffffff;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+  display: block;
+}
+
+@media (max-width: 900px) {
+  .form-grid {
+    grid-template-columns: 1fr;
   }
 }
