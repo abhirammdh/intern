@@ -1,428 +1,398 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // DOM Elements
-    const editor = document.getElementById('latex-editor');
-    const lineNumbers = document.getElementById('line-numbers');
-    const compileBtn = document.getElementById('compile-btn');
-    const downloadBtn = document.getElementById('download-btn');
-    const errorPanel = document.getElementById('error-panel');
-    const loading = document.getElementById('loading');
-    const pdfPreview = document.getElementById('pdf-preview');
-    const previewTabsContainer = document.getElementById('preview-tabs');
-    const themeToggle = document.getElementById('theme-toggle');
-    const htmlRoot = document.documentElement;
-    const navItems = document.querySelectorAll('.nav-item');
-    const pages = document.querySelectorAll('.page');
-    const templateBar = document.getElementById('template-bar');
+  // ====================== DOM ELEMENTS ======================
+  const editor               = document.getElementById('latex-editor');
+  const lineNumbers          = document.getElementById('line-numbers');
+  const compileBtn           = document.getElementById('compile-btn');
+  const downloadBtn          = document.getElementById('download-btn');
+  const errorPanel           = document.getElementById('error-panel');
+  const loading              = document.getElementById('loading');
+  const pdfPreview           = document.getElementById('pdf-preview');
+  const previewTabsContainer = document.getElementById('preview-tabs');
+  const themeToggle          = document.getElementById('theme-toggle');
+  const htmlRoot             = document.documentElement;
+  const navItems             = document.querySelectorAll('.nav-item');
+  const pages                = document.querySelectorAll('.page');
+  const templateBar          = document.getElementById('template-bar');
+  const templateBtns         = document.querySelectorAll('.template-btn');
+  const loadingSpan          = loading ? loading.querySelector('span') : null;
 
-    // Theme Toggle
-    function initTheme() {
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        htmlRoot.setAttribute('data-theme', savedTheme);
-        themeToggle.checked = savedTheme === 'light';
-        const currentThemeEl = document.getElementById('current-theme');
-        if (currentThemeEl) currentThemeEl.textContent = savedTheme.charAt(0).toUpperCase() + savedTheme.slice(1);
-    }
+  let currentPreviewUrl = null;
 
+  // ====================== THEME ======================
+  function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    htmlRoot.setAttribute('data-theme', savedTheme);
+    if (themeToggle) themeToggle.checked = savedTheme === 'light';
+  }
+
+  if (themeToggle) {
     themeToggle.addEventListener('change', () => {
-        const newTheme = themeToggle.checked ? 'light' : 'dark';
-        htmlRoot.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        const currentThemeEl = document.getElementById('current-theme');
-        if (currentThemeEl) currentThemeEl.textContent = newTheme.charAt(0).toUpperCase() + newTheme.slice(1);
+      const newTheme = themeToggle.checked ? 'light' : 'dark';
+      htmlRoot.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
     });
+  }
 
-    initTheme();
+  initTheme();
 
-    // Navigation
-    navItems.forEach(item => {
-        item.addEventListener('click', () => {
-            navItems.forEach(i => i.classList.remove('active'));
-            item.classList.add('active');
+  // ====================== NAVIGATION ======================
+  navItems.forEach(item => {
+    item.addEventListener('click', () => {
+      navItems.forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
 
-            const pageId = item.dataset.page;
-            pages.forEach(page => page.classList.toggle('active', page.id === pageId));
+      const pageId = item.dataset.page;
+      pages.forEach(page => page.classList.toggle('active', page.id === pageId));
 
-            templateBar.style.display = pageId === 'home' ? 'flex' : 'none';
-        });
+      if (templateBar) {
+        templateBar.style.display = pageId === 'home' ? 'flex' : 'none';
+      }
     });
+  });
 
-    // Line Numbers - perfect alignment
-    function updateLineNumbers() {
-        const lines = editor.value.split('\n');
-        const lineCount = lines.length;
-        let numbers = '';
-        for (let i = 1; i <= lineCount; i++) {
-            numbers += i + '\n';
-        }
-        lineNumbers.textContent = numbers.trimEnd();
+  // ====================== LINE NUMBERS ======================
+  function updateLineNumbers() {
+    if (!editor || !lineNumbers) return;
+    const lines = editor.value.split('\n');
+    let numbers = '';
+    for (let i = 1; i <= lines.length; i++) numbers += i + '\n';
+    lineNumbers.textContent = numbers.trimEnd();
+    lineNumbers.style.height = editor.scrollHeight + 'px';
+  }
 
-        // Sync height
-        lineNumbers.style.height = editor.scrollHeight + 'px';
-    }
-
+  if (editor) {
     editor.addEventListener('input', updateLineNumbers);
     editor.addEventListener('scroll', () => {
-        lineNumbers.scrollTop = editor.scrollTop;
+      if (lineNumbers) lineNumbers.scrollTop = editor.scrollTop;
     });
-
-    // Extra sync for paste/cut/enter/backspace
-    editor.addEventListener('paste', () => setTimeout(updateLineNumbers, 0));
-    editor.addEventListener('cut', () => setTimeout(updateLineNumbers, 0));
+    editor.addEventListener('paste',   () => setTimeout(updateLineNumbers, 10));
+    editor.addEventListener('cut',     () => setTimeout(updateLineNumbers, 10));
     editor.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === 'Backspace') {
-            setTimeout(updateLineNumbers, 0);
-        }
+      if (['Enter', 'Backspace', 'Delete'].includes(e.key)) setTimeout(updateLineNumbers, 10);
     });
 
     updateLineNumbers();
     window.addEventListener('resize', updateLineNumbers);
+  }
 
-    // Templates
-    const templates = {
-        custom_resume: `\\documentclass[11pt,a4paper,sans]{moderncv}
-\\moderncvstyle{classic}
-\\moderncvcolor{blue}
-\\usepackage{tcolorbox}  % For boxed sections
-\\usepackage[scale=0.85]{geometry}  % Adjust margins for better fit
+  // ====================== TEMPLATES — loaded from XML via server ======================
+  /**
+   * Fetches GET /templates  →  { templates: [ { id, label, description, content } ] }
+   * Server reads templates.xml, parses it with xml2js, returns JSON.
+   * Each template button's data-template must match the XML template id attribute.
+   */
+  let templatesCache = {};   // { id: content }
 
-\\name{Your Full Name}{}
-\\title{Your Job Title / Position Sought}
-\\address{Your Street Address}{City, State, ZIP}{Country}
-\\phone[mobile]{+1~(123)~456-7890}  % Optional phone
-\\email{your.email@example.com}
-\\homepage{www.linkedin.com/in/your-linkedin-id}  % LinkedIn as homepage
-\\social[github]{your-github-username}  % Optional GitHub
+  async function loadTemplates() {
+    try {
+      const res = await fetch('/templates');
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
 
-\\begin{document}
+      const data = await res.json();
 
-\\makecvtitle
+      if (!data.templates || !Array.isArray(data.templates)) {
+        throw new Error('Unexpected response shape from /templates');
+      }
 
-\\begin{tcolorbox}[colback=blue!5!white, colframe=blue!75!black, title=Personal Summary / Objective, sharp corners, boxrule=0.5pt]
-Your 3-5 sentence professional summary or career objective goes here. Highlight your strengths, experience, and goals.
-\\end{tcolorbox}
+      // Build a lookup map  id → content
+      data.templates.forEach(t => {
+        templatesCache[t.id] = t.content;
+      });
 
-\\begin{tcolorbox}[colback=green!5!white, colframe=green!75!black, title=Education, sharp corners, boxrule=0.5pt]
-\\cventry{2022--2026}{B.S. Computer Science}{Sri Sathya Sai Institute of Higher Learning (SSSIHL)}{Anekal, Karnataka, India}{}{Relevant coursework: Data Structures, Algorithms, Web Development. GPA: 3.8/4.0}\\\\
-
-\\cventry{2018--2022}{High School Diploma}{Your High School}{City, State}{}{Focused on Mathematics and Sciences.}
-\\end{tcolorbox}
-
-\\begin{tcolorbox}[colback=orange!5!white, colframe=orange!75!black, title=Skills, sharp corners, boxrule=0.5pt]
-\\cvitem{Programming Languages}{Python, JavaScript, C++, Java}
-\\cvitem{Web Development}{HTML/CSS, React, Node.js, Express}
-\\cvitem{Tools & Frameworks}{LaTeX, Git, Docker, AWS}
-\\cvitem{Soft Skills}{Team Collaboration, Problem-Solving, Communication}
-\\end{tcolorbox}
-
-\\begin{tcolorbox}[colback=purple!5!white, colframe=purple!75!black, title=Projects, sharp corners, boxrule=0.5pt]
-\\cvitem{LaTeX Editor Project}{Developed a web-based LaTeX editor with real-time preview, templates, and theme switching using HTML, CSS, JS, and Node.js backend. Collaborated with team of 4 at SSSIHL.}
-\\cvitem{Another Project}{Brief description: Built a machine learning model for image classification using PyTorch. Achieved 95\\% accuracy on test data.}
-\\end{tcolorbox}
-
-\\begin{tcolorbox}[colback=red!5!white, colframe=red!75!black, title=Experience, sharp corners, boxrule=0.5pt]
-\\cventry{2024--Present}{Intern / Freelancer}{Company Name}{City, State}{}{Responsibilities: Developed web applications, managed databases, and contributed to open-source projects.}
-\\cventry{2023}{Summer Intern}{Another Company}{City, State}{}{Assisted in software testing and bug fixing.}
-\\end{tcolorbox}
-
-\\end{document}`,
-
-        basic: `\\documentclass{article}
-\\usepackage[margin=1in]{geometry}
-\\begin{document}
-
-\\title{My Simple Document}
-\\author{Abhiram}
-\\date{\\today}
-
-\\maketitle
-
-\\section{Introduction}
-Hello! This is a basic article template.
-
-\\section{Conclusion}
-Thank you for using this editor.
-
-\\end{document}`,
-
-        report: `\\documentclass[12pt,a4paper]{report}
-\\usepackage[margin=2.5cm]{geometry}
-\\usepackage{graphicx}
-\\usepackage{hyperref}
-
-\\title{Project Report}
-\\author{Abhiram \\\\ Anekal, Karnataka}
-\\date{\\today}
-
-\\begin{document}
-
-\\maketitle
-
-\\chapter{Introduction}
-This is the first chapter.
-
-\\chapter{Methodology}
-Describe your methods here.
-
-\\chapter{Results}
-Your findings go here.
-
-\\chapter{Conclusion}
-Summary and future work.
-
-\\end{document}`,
-
-        math: `\\documentclass{article}
-\\usepackage{amsmath,amssymb,geometry}
-\\geometry{margin=1in}
-
-\\begin{document}
-
-\\title{Mathematics Document}
-\\author{Abhiram}
-\\maketitle
-
-\\section{Important Equations}
-
-Inline: $E = mc^2$
-
-Display:
-\\begin{equation}
-  \\int_{-\\infty}^{\\infty} e^{-x^2}\\,dx = \\sqrt{\\pi}
-\\end{equation}
-
-Matrix example:
-\\begin{equation*}
-  A = \\begin{pmatrix}
-    1 & 2 \\\\
-    3 & 4
-  \\end{pmatrix}
-\\end{equation*}
-
-\\end{document}`,
-
-        beamer: `\\documentclass{beamer}
-\\usetheme{Madrid}
-\\usepackage{graphicx}
-
-\\title{My Presentation}
-\\author{Abhiram}
-\\date{\\today}
-
-\\begin{document}
-
-\\begin{frame}
-  \\titlepage
-\\end{frame}
-
-\\begin{frame}{Slide 1}
-  \\begin{itemize}
-    \\item Point one
-    \\item Point two
-  \\end{itemize}
-\\end{frame}
-
-\\begin{frame}{Slide 2}
-  Important equation:
-  \\[ E = mc^2 \\]
-\\end{frame}
-
-\\end{document}`,
-
-        cv: `\\documentclass[11pt,a4paper,sans]{moderncv}
-\\moderncvstyle{classic}
-\\moderncvcolor{blue}
-
-\\name{Abhiram}{}
-\\title{Student / LaTeX Enthusiast}
-\\address{Anekal}{Karnataka}{India}
-\\phone[mobile]{+91~XXXXXXXXXX}
-\\email{abhiram@example.com}
-
-\\begin{document}
-
-\\makecvtitle
-
-\\section{Education}
-\\cventry{2022--2026}{B.Sc / B.Tech}{University Name}{City}{}{\\small Relevant coursework}
-
-\\section{Experience}
-\\cventry{2024--Present}{Freelance LaTeX Typesetter}{}{}{}
-
-\\section{Skills}
-\\cvitem{Software}{LaTeX, Overleaf, GitHub}
-\\cvitem{Languages}{Kannada, English, Hindi}
-
-\\end{document}`
-    };
-
-    document.querySelectorAll('.template-btn').forEach(btn => {
+      // Attach click listeners to every template button
+      templateBtns.forEach(btn => {
+        const key = btn.dataset.template;
         btn.addEventListener('click', () => {
-            const key = btn.dataset.template;
-            if (templates[key]) {
-                editor.value = templates[key];
-                updateLineNumbers();
-            }
+          if (templatesCache[key] && editor) {
+            editor.value = templatesCache[key];
+            updateLineNumbers();
+          } else {
+            console.warn(`Template "${key}" not found in XML`);
+          }
         });
-    });
+      });
 
-    editor.value = templates.custom_resume;
-    updateLineNumbers();
+      // Load the "basic" template by default into the editor
+      if (editor && templatesCache['basic']) {
+        editor.value = templatesCache['basic'];
+        updateLineNumbers();
+      }
 
-    // Preview Tabs
-    let previewTabCounter = 0;
-    let currentPreviewUrl = null;
+      console.log(`Loaded ${data.templates.length} templates from XML`);
 
-    function addPreviewTab(url, label) {
-        previewTabCounter++;
-        const tab = document.createElement('div');
-        tab.className = 'preview-tab';
-        tab.textContent = label;
-
-        tab.addEventListener('click', () => {
-            document.querySelectorAll('.preview-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            pdfPreview.src = url + '#view=FitH,top';
-            currentPreviewUrl = url;
-        });
-
-        previewTabsContainer.innerHTML = '';
-        previewTabsContainer.appendChild(tab);
-
-        pdfPreview.src = url + '#view=FitH,top';
-        currentPreviewUrl = url;
+    } catch (err) {
+      console.error('Failed to load templates from server:', err.message);
+      // Fallback: editor stays empty and buttons do nothing
+      if (errorPanel) {
+        errorPanel.textContent = `Warning: Could not load templates — ${err.message}`;
+        errorPanel.style.display = 'block';
+        setTimeout(() => { errorPanel.style.display = 'none'; }, 5000);
+      }
     }
+  }
 
-    // Compile Logic
+  loadTemplates();
+
+  // ====================== PREVIEW TABS ======================
+  function addPreviewTab(url, label) {
+    if (!previewTabsContainer || !pdfPreview) return;
+    previewTabsContainer.innerHTML = '';
+
+    const tab = document.createElement('div');
+    tab.className = 'preview-tab active';
+    tab.textContent = label;
+    previewTabsContainer.appendChild(tab);
+
+    pdfPreview.src = url + '#view=FitH,top';
+    currentPreviewUrl = url;
+  }
+
+  // ====================== COMPILE ======================
+  if (compileBtn) {
     compileBtn.addEventListener('click', async () => {
-        errorPanel.style.display = 'none';
-        errorPanel.textContent = '';
-        loading.style.display = 'flex';
-        downloadBtn.disabled = true;
+      if (!errorPanel || !loading || !editor) return;
 
-        const latex = editor.value.trim();
+      errorPanel.style.display = 'none';
+      loading.style.display = 'flex';
+      if (downloadBtn) downloadBtn.disabled = true;
 
-        if (!latex) {
-            errorPanel.textContent = 'Please enter some LaTeX code first.';
-            errorPanel.style.display = 'block';
-            loading.style.display = 'none';
-            return;
-        }
+      const latex = editor.value.trim();
+      if (!latex) {
+        errorPanel.textContent = 'Please enter some LaTeX code first.';
+        errorPanel.style.display = 'block';
+        loading.style.display = 'none';
+        return;
+      }
 
-        try {
-            const response = await fetch('/compile', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ latex })
-            });
-
-            if (!response.ok) {
-                const text = await response.text();
-                let errMsg = `Server error (${response.status})`;
-                try {
-                    const json = JSON.parse(text);
-                    errMsg = json.error || text || errMsg;
-                } catch {}
-                errorPanel.textContent = errMsg;
-                errorPanel.style.display = 'block';
-                return;
-            }
-
-            const blob = await response.blob();
-            if (blob.size < 200) {
-                errorPanel.textContent = 'Generated PDF is empty or invalid.';
-                errorPanel.style.display = 'block';
-                return;
-            }
-
-            const url = URL.createObjectURL(blob);
-
-            const timeStr = new Date().toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-            addPreviewTab(url, `preview-${timeStr}.pdf`);
-
-            downloadBtn.disabled = false;
-            downloadBtn.onclick = () => {
-                if (currentPreviewUrl) {
-                    const a = document.createElement('a');
-                    a.href = currentPreviewUrl;
-                    a.download = `document-${timeStr}.pdf`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                }
-            };
-
-        } catch (err) {
-            errorPanel.textContent = `Network or server error: ${err.message}`;
-            errorPanel.style.display = 'block';
-        } finally {
-            loading.style.display = 'none';
-        }
-    });
-
-    // Ctrl + Enter shortcut
-    editor.addEventListener('keydown', (e) => {
-        if (e.ctrlKey && e.key === 'Enter') {
-            e.preventDefault();
-            compileBtn.click();
-        }
-    });
-
-    // NEW: Resume Form Handler
-    const resumeForm = document.getElementById('resume-form');
-    if (resumeForm) {
-        resumeForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const data = {
-                fullName: document.getElementById('full-name')?.value.trim() || 'Your Name',
-                jobTitle: document.getElementById('job-title')?.value.trim() || 'Student / Developer',
-                email: document.getElementById('email')?.value.trim() || '',
-                phone: document.getElementById('phone')?.value.trim() || '',
-                address: document.getElementById('address')?.value.trim() || '',
-                summary: document.getElementById('summary')?.value.trim() || '',
-                education: document.getElementById('education')?.value.trim() || '',
-                skills: document.getElementById('skills')?.value.trim() || '',
-                projects: document.getElementById('projects')?.value.trim() || '',
-                experience: document.getElementById('experience')?.value.trim() || '',
-                certifications: document.getElementById('certifications')?.value.trim() || '',
-                languages: document.getElementById('languages')?.value.trim() || ''
-            };
-
-            loading.style.display = 'flex';
-            loading.querySelector('span').textContent = 'Generating LaTeX with Groq...';
-
-            try {
-                const response = await fetch('/generate-resume', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-
-                if (!response.ok) {
-                    const err = await response.json();
-                    alert('Error: ' + (err.error || 'Failed to generate resume'));
-                    return;
-                }
-
-                const { latex } = await response.json();
-
-                // Load into editor
-                editor.value = latex;
-                updateLineNumbers();
-
-                alert('Resume LaTeX generated successfully! Click Compile to preview.');
-                // Optional: Auto-compile
-                // setTimeout(() => compileBtn.click(), 1000);
-
-            } catch (err) {
-                alert('Network error: ' + err.message);
-            } finally {
-                loading.style.display = 'none';
-                loading.querySelector('span').textContent = 'Compiling LaTeX...';
-            }
+      try {
+        const response = await fetch('/compile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ latex })
         });
-    }
+
+        if (!response.ok) {
+          const text = await response.text();
+          let errMsg = `Server error (${response.status})`;
+          try { const json = JSON.parse(text); errMsg = json.error || errMsg; } catch {}
+          errorPanel.textContent = errMsg;
+          errorPanel.style.display = 'block';
+          return;
+        }
+
+        const blob = await response.blob();
+        if (blob.size < 200) {
+          errorPanel.textContent = 'Generated PDF is empty or invalid.';
+          errorPanel.style.display = 'block';
+          return;
+        }
+
+        const url     = URL.createObjectURL(blob);
+        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        addPreviewTab(url, `preview-${timeStr}.pdf`);
+
+        if (downloadBtn) {
+          downloadBtn.disabled = false;
+          downloadBtn.onclick = () => {
+            if (!currentPreviewUrl) return;
+            const a = document.createElement('a');
+            a.href     = currentPreviewUrl;
+            a.download = `document-${timeStr.replace(/:/g, '-')}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          };
+        }
+
+      } catch (err) {
+        errorPanel.textContent = `Network or server error: ${err.message}`;
+        errorPanel.style.display = 'block';
+      } finally {
+        loading.style.display = 'none';
+      }
+    });
+  }
+
+  // Ctrl + Enter shortcut
+  if (editor) {
+    editor.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); compileBtn?.click(); }
+    });
+  }
+
+  // ====================== AI RESUME BUILDER ======================
+  const numProjects      = document.getElementById('num-projects');
+  const numEducation     = document.getElementById('num-education');
+  const numInternships   = document.getElementById('num-internships');
+  const numCertificates  = document.getElementById('num-certificates');
+
+  const projectsContainer    = document.getElementById('projects-container');
+  const educationContainer   = document.getElementById('education-container');
+  const internshipsContainer = document.getElementById('internships-container');
+  const certificatesContainer = document.getElementById('certificates-container');
+
+  const aiResumeForm = document.getElementById('ai-resume-form');
+  const aiResult     = document.getElementById('ai-result');
+  const generatedEl  = document.getElementById('generated-latex');
+  const copyBtn      = document.getElementById('copy-to-editor-btn');
+
+  function renderDynamicBoxes() {
+    const configs = [
+      { container: projectsContainer, count: parseInt(numProjects?.value) || 0, title: 'Project',
+        fields: [
+          { id: 'proj-title', label: 'Project Title',        placeholder: 'e.g. Image to ASCII Converter' },
+          { id: 'proj-tech',  label: 'Technologies Used',    placeholder: 'e.g. Python, Pillow' },
+          { id: 'proj-desc',  label: 'Description',          placeholder: 'Brief description', type: 'textarea' }
+        ]},
+      { container: educationContainer, count: parseInt(numEducation?.value) || 0, title: 'Education',
+        fields: [
+          { id: 'edu-degree', label: 'Degree / Course',  placeholder: 'e.g. B.Sc Computer Science' },
+          { id: 'edu-inst',   label: 'Institution',      placeholder: 'e.g. Your University' },
+          { id: 'edu-year',   label: 'Year',             placeholder: 'e.g. 2023 -- 2026' },
+          { id: 'edu-grade',  label: 'Grade / CGPA',     placeholder: 'e.g. 7.8 / 10' }
+        ]},
+      { container: internshipsContainer, count: parseInt(numInternships?.value) || 0, title: 'Internship / Experience',
+        fields: [
+          { id: 'int-role',    label: 'Role',     placeholder: 'e.g. Web Development Intern' },
+          { id: 'int-company', label: 'Company',  placeholder: 'e.g. Company Name' },
+          { id: 'int-period',  label: 'Period',   placeholder: 'e.g. Jun 2024 -- Aug 2024' },
+          { id: 'int-desc',    label: 'Work Done',placeholder: 'Describe your work', type: 'textarea' }
+        ]},
+      { container: certificatesContainer, count: parseInt(numCertificates?.value) || 0, title: 'Certificate',
+        fields: [
+          { id: 'cert-name',   label: 'Certificate Name', placeholder: 'e.g. Full Stack Web Development' },
+          { id: 'cert-issuer', label: 'Issued By',         placeholder: 'e.g. Udemy' },
+          { id: 'cert-year',   label: 'Year',              placeholder: 'e.g. 2025' }
+        ]}
+    ];
+
+    configs.forEach(({ container, count, title, fields }) => {
+      if (!container) return;
+      container.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const box = document.createElement('div');
+        box.style.cssText = `border:1px solid var(--border);border-radius:12px;padding:1.4rem 1.6rem;margin-bottom:1.2rem;background:rgba(255,255,255,0.03);`;
+        box.innerHTML = `<h4 style="margin-bottom:1rem;color:var(--accent);font-size:1rem;">${title} ${i + 1}</h4>`;
+
+        fields.forEach(f => {
+          const inputId = `${f.id}-${i}`;
+          const fieldEl = document.createElement('div');
+          fieldEl.className = 'form-group';
+          fieldEl.innerHTML = `
+            <label for="${inputId}">${f.label}</label>
+            ${f.type === 'textarea'
+              ? `<textarea id="${inputId}" placeholder="${f.placeholder}" rows="3"></textarea>`
+              : `<input type="text" id="${inputId}" placeholder="${f.placeholder}">`}
+          `;
+          box.appendChild(fieldEl);
+        });
+        container.appendChild(box);
+      }
+    });
+  }
+
+  [numProjects, numEducation, numInternships, numCertificates].forEach(input => {
+    if (input) input.addEventListener('input', renderDynamicBoxes);
+  });
+
+  renderDynamicBoxes();
+
+  function collectFormData() {
+    const n = s => (s ? s.trim() : '');
+    const projects = [], education = [], internships = [], certificates = [];
+
+    for (let i = 0; i < (parseInt(numProjects?.value) || 0); i++)
+      projects.push({ title: n(document.getElementById(`proj-title-${i}`)?.value), tech: n(document.getElementById(`proj-tech-${i}`)?.value), desc: n(document.getElementById(`proj-desc-${i}`)?.value) });
+
+    for (let i = 0; i < (parseInt(numEducation?.value) || 0); i++)
+      education.push({ degree: n(document.getElementById(`edu-degree-${i}`)?.value), inst: n(document.getElementById(`edu-inst-${i}`)?.value), year: n(document.getElementById(`edu-year-${i}`)?.value), grade: n(document.getElementById(`edu-grade-${i}`)?.value) });
+
+    for (let i = 0; i < (parseInt(numInternships?.value) || 0); i++)
+      internships.push({ role: n(document.getElementById(`int-role-${i}`)?.value), company: n(document.getElementById(`int-company-${i}`)?.value), period: n(document.getElementById(`int-period-${i}`)?.value), desc: n(document.getElementById(`int-desc-${i}`)?.value) });
+
+    for (let i = 0; i < (parseInt(numCertificates?.value) || 0); i++)
+      certificates.push({ name: n(document.getElementById(`cert-name-${i}`)?.value), issuer: n(document.getElementById(`cert-issuer-${i}`)?.value), year: n(document.getElementById(`cert-year-${i}`)?.value) });
+
+    return {
+      name: n(document.getElementById('full-name')?.value),
+      email: n(document.getElementById('email')?.value),
+      projects, education, internships, certificates
+    };
+  }
+
+  function buildPrompt(data) {
+    return `Generate a complete, compilable LaTeX resume using moderncv or article class.
+Output ONLY raw LaTeX code starting with \\documentclass. No explanations.
+
+NAME: ${data.name || 'Your Name'}
+EMAIL: ${data.email || 'your.email@example.com'}
+
+EDUCATION:
+${data.education.map((e,i) => `${i+1}. ${e.degree} at ${e.inst}, ${e.year}, Grade: ${e.grade}`).join('\n') || 'None'}
+
+EXPERIENCE:
+${data.internships.map((x,i) => `${i+1}. ${x.role} at ${x.company} (${x.period}): ${x.desc}`).join('\n') || 'None'}
+
+PROJECTS:
+${data.projects.map((p,i) => `${i+1}. ${p.title} — Tech: ${p.tech} — ${p.desc}`).join('\n') || 'None'}
+
+CERTIFICATES:
+${data.certificates.map((c,i) => `${i+1}. ${c.name} by ${c.issuer} (${c.year})`).join('\n') || 'None'}`;
+  }
+
+  if (aiResumeForm) {
+    aiResumeForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = collectFormData();
+      if (!data.name || !data.email) { alert('Please enter your full name and email.'); return; }
+
+      const originalMsg = loadingSpan ? loadingSpan.textContent : '';
+      if (loadingSpan) loadingSpan.textContent = 'Generating AI Resume...';
+      if (loading) loading.style.display = 'flex';
+      if (aiResult) aiResult.style.display = 'none';
+
+      try {
+        const response = await fetch('/ai-resume', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: buildPrompt(data) })
+        });
+
+        if (!response.ok) {
+          let errMsg = `Server error (${response.status})`;
+          try { const json = await response.json(); errMsg = json.error || errMsg; } catch {}
+          throw new Error(errMsg);
+        }
+
+        const result = await response.json();
+        let latex = (result.latex || '').replace(/^```(?:latex)?\s*/i, '').replace(/```\s*$/i, '').trim();
+        if (!latex) throw new Error('Received empty LaTeX from server.');
+
+        if (generatedEl) generatedEl.textContent = latex;
+        if (aiResult) { aiResult.style.display = 'block'; aiResult.scrollIntoView({ behavior: 'smooth' }); }
+
+      } catch (err) {
+        alert(`Error: ${err.message}`);
+      } finally {
+        if (loading) loading.style.display = 'none';
+        if (loadingSpan) loadingSpan.textContent = originalMsg;
+      }
+    });
+  }
+
+  if (copyBtn) {
+    copyBtn.addEventListener('click', () => {
+      const latex = generatedEl ? generatedEl.textContent.trim() : '';
+      if (!latex || !editor) return;
+      editor.value = latex;
+      updateLineNumbers();
+
+      navItems.forEach(i => i.classList.remove('active'));
+      const homeTab = document.querySelector('[data-page="home"]');
+      if (homeTab) homeTab.classList.add('active');
+      pages.forEach(p => p.classList.toggle('active', p.id === 'home'));
+      if (templateBar) templateBar.style.display = 'flex';
+    });
+  }
 });

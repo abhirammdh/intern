@@ -19,6 +19,7 @@
     <div class="title">LaTeX Editor – SSSIHL</div>
     <nav class="menu-bar">
       <span class="nav-item active" data-page="home">Home</span>
+      <span class="nav-item" data-page="ai-resume">Build with AI</span>
       <span class="nav-item" data-page="feedback">Feedback</span>
       <span class="nav-item" data-page="theme">Theme</span>
       <span class="nav-item" data-page="about">About</span>
@@ -50,7 +51,6 @@
   <!-- Template bar -->
   <div class="template-bar" id="template-bar">
     <span class="template-label">Templates:</span>
-    <button class="template-btn" data-template="custom_resume">Custom Resume</button>
     <button class="template-btn" data-template="basic">Basic Article</button>
     <button class="template-btn" data-template="report">Report</button>
     <button class="template-btn" data-template="math">Math Heavy</button>
@@ -58,84 +58,11 @@
     <button class="template-btn" data-template="cv">Simple CV</button>
   </div>
 
-  <!-- Pages -->
+  <!-- Main content -->
   <main id="main-content">
 
-    <!-- Home - Editor with Resume Form -->
+    <!-- Home – Editor -->
     <section id="home" class="page active">
-      <!-- NEW: User Details Form -->
-      <div class="user-form-container">
-        <h2>Fill Your Details → Generate Resume LaTeX</h2>
-        <form id="resume-form">
-          <div class="form-grid">
-            <div>
-              <label for="full-name">Full Name</label>
-              <input type="text" id="full-name" placeholder="D. Abhiram" required>
-            </div>
-            <div>
-              <label for="job-title">Job Title / Position</label>
-              <input type="text" id="job-title" placeholder="Computer Science Student / Web Developer">
-            </div>
-            
-            <div>
-              <label for="email">Email</label>
-              <input type="email" id="email" placeholder="abhiram@example.com">
-            </div>
-            <div>
-              <label for="phone">Phone</label>
-              <input type="tel" id="phone" placeholder="+91 98765 43210">
-            </div>
-            
-            <div class="full-width">
-              <label for="address">Address / Location</label>
-              <input type="text" id="address" placeholder="Anekal, Karnataka, India">
-            </div>
-            
-            <div class="full-width">
-              <label for="summary">Professional Summary (3-5 sentences)</label>
-              <textarea id="summary" rows="4" placeholder="Passionate CS student at SSSIHL with experience in web development and LaTeX..."></textarea>
-            </div>
-            
-            <div class="full-width">
-              <label for="education">Education (one per line: Year | Degree | Institution | Location | Details)</label>
-              <textarea id="education" rows="5" placeholder="2022-2026 | B.S. Computer Science | SSSIHL | Anekal, Karnataka | GPA 3.8, Relevant: DS, Algo, Web Dev"></textarea>
-            </div>
-            
-            <div class="full-width">
-              <label for="skills">Skills (comma separated or one per line)</label>
-              <textarea id="skills" rows="4" placeholder="HTML, CSS, JavaScript, React, Node.js, LaTeX, Git, Python, Teamwork"></textarea>
-            </div>
-            
-            <div class="full-width">
-              <label for="projects">Projects (one per line: Name | Description | Link(s))</label>
-              <textarea id="projects" rows="5" placeholder="LaTeX Editor | Web-based LaTeX editor with live preview | https://github.com/..."></textarea>
-            </div>
-            
-            <div class="full-width">
-              <label for="experience">Experience / Internships (one per line: Year | Role | Company | Location | Key duties)</label>
-              <textarea id="experience" rows="4" placeholder="2024-Present | Web Dev Intern | Startup XYZ | Remote | Built REST APIs, React components"></textarea>
-            </div>
-            
-            <div class="full-width">
-              <label for="certifications">Certifications (one per line: Name | Issuer | Year | Link)</label>
-              <textarea id="certifications" rows="4" placeholder="Google Data Analytics | Google | 2024 | https://coursera.org/..."></textarea>
-            </div>
-            
-            <div class="full-width">
-              <label for="languages">Languages (comma separated)</label>
-              <input type="text" id="languages" placeholder="English, Hindi, Kannada">
-            </div>
-          </div>
-
-          <button type="submit" class="button generate-btn">
-            <span class="button__text">Generate LaTeX Resume</span>
-            <span class="button__icon">
-              <i class="fas fa-magic"></i>
-            </span>
-          </button>
-        </form>
-      </div>
-
       <div class="main-layout">
         <div class="content-area full-width">
           <div class="split-view">
@@ -167,50 +94,99 @@
           </span>
         </button>
 
-        <button id="download-btn" class="button download-btn" disabled>
-          <span class="button__text">Download</span>
-          <span class="button__icon">
-            <svg class="svg" viewBox="0 0 35 35" xmlns="http://www.w3.org/2000/svg">
-              <path d="M17.5,22.131a1.249,1.249,0,0,1-1.25-1.25V2.187a1.25,1.25,0,0,1,2.5,0V20.881A1.25,1.25,0,0,1,17.5,22.131Z"></path>
-              <path d="M17.5,22.693a3.189,3.189,0,0,1-2.262-.936L8.487,15.006a1.249,1.249,0,0,1,1.767-1.767l6.751,6.751a.7.7,0,0,0,.99,0l6.751-6.751a1.25,1.25,0,0,1,1.768,1.767l-6.752,6.751A3.191,3.191,0,0,1,17.5,22.693Z"></path>
-              <path d="M31.436,34.063H3.564A3.318,3.318,0,0,1,.25,30.749V22.011a1.25,1.25,0,0,1,2.5,0v8.738a.815.815,0,0,0,.814.814H31.436a.815.815,0,0,0,.814-.814V22.011a1.25,1.25,0,1,1,2.5,0v8.738A3.318,3.318,0,0,1,31.436,34.063Z"></path>
-            </svg>
-          </span>
+        <button id="download-btn" class="botao" disabled>
+          <svg
+            class="mysvg"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            height="24px"
+            width="24px"
+          >
+            <g stroke-width="0" id="SVGRepo_bgCarrier"></g>
+            <g stroke-linejoin="round" stroke-linecap="round" id="SVGRepo_tracerCarrier"></g>
+            <g id="SVGRepo_iconCarrier">
+              <g id="Interface / Download">
+                <path
+                  stroke-linejoin="round"
+                  stroke-linecap="round"
+                  stroke-width="2"
+                  stroke="#f1f1f1"
+                  d="M6 21H18M12 3V17M12 17L17 12M12 17L7 12"
+                  id="Vector"
+                ></path>
+              </g>
+            </g>
+          </svg>
+          <span class="texto">Download</span>
         </button>
       </div>
     </section>
 
-    <!-- Feedback -->
-    <section id="feedback" class="page">
+    <!-- Build with AI Section -->
+    <section id="ai-resume" class="page">
       <div class="page-content">
-        <h1>Feedback</h1>
-        <p>We'd love to hear your thoughts! This project is made by 4 students from SSSIHL.</p>
-        <form id="feedback-form">
-          <label for="name">Your Name:</label>
-          <input type="text" id="name" placeholder="Enter your name" required>
+        <h1>Build Your Resume with AI Help</h1>
+        <p>Enter how many entries you want → fill the boxes → Generate LaTeX</p>
 
-          <label for="email">Email:</label>
-          <input type="email" id="email" placeholder="your.email@example.com" required>
+        <form id="ai-resume-form">
 
-          <label for="message">Your Feedback:</label>
-          <textarea id="message" rows="8" placeholder="Tell us what you think..." required></textarea>
+          <!-- Basic Info -->
+          <div class="form-group">
+            <label for="full-name">Full Name *</label>
+            <input type="text" id="full-name" placeholder="Devulapalli Abhiram" required>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email *</label>
+            <input type="email" id="email" placeholder="abhiramdevulapalli8@gmail.com" required>
+          </div>
+
+          <!-- Number of Boxes -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>How many Projects?</label>
+              <input type="number" id="num-projects" min="1" value="3" class="num-input">
+            </div>
+            <div class="form-group">
+              <label>How many Education?</label>
+              <input type="number" id="num-education" min="1" value="3" class="num-input">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>How many Internships / Experience?</label>
+              <input type="number" id="num-internships" min="0" value="2" class="num-input">
+            </div>
+            <div class="form-group">
+              <label>How many Certificates?</label>
+              <input type="number" id="num-certificates" min="0" value="4" class="num-input">
+            </div>
+          </div>
+
+          <!-- Dynamic Boxes will appear here -->
+          <div id="projects-container" class="dynamic-container"></div>
+          <div id="education-container" class="dynamic-container"></div>
+          <div id="internships-container" class="dynamic-container"></div>
+          <div id="certificates-container" class="dynamic-container"></div>
 
           <button type="submit" class="button submit-btn">
-            <span class="button__text">Send Feedback</span>
-            <span class="button__icon">
-              <i class="fas fa-paper-plane"></i>
-            </span>
+            <span class="button__text">Generate LaTeX Resume</span>
+            <span class="button__icon"><i class="fas fa-magic"></i></span>
           </button>
         </form>
-      </div>
-    </section>
 
-    <!-- Theme -->
-    <section id="theme" class="page">
-      <div class="page-content">
-        <h1>Theme Settings</h1>
-        <p>Use the toggle in the top-right to switch between light and dark mode.</p>
-        <p>Current theme: <strong id="current-theme">Dark</strong></p>
+        <!-- Result Area -->
+        <div id="ai-result" style="display:none; margin-top:2rem;">
+          <h3>Generated LaTeX Code</h3>
+          <pre id="generated-latex" style="background:#0d1117; color:#c9d1d9; padding:1.5rem; border-radius:10px; overflow:auto; max-height:500px;"></pre>
+
+          <button id="copy-to-editor-btn" class="button" style="margin-top:15px;">
+            <span class="button__text">Copy to Editor & Go to Home</span>
+            <span class="button__icon"><i class="fas fa-copy"></i></span>
+          </button>
+        </div>
       </div>
     </section>
 
@@ -222,27 +198,23 @@
 
         <div class="team-grid">
           <div class="team-member">
-            <img src="https://i.ibb.co/PGvSNzQ5/1766554274591.jpg" alt="D. Abhiram">
+            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400" alt="D. Abhiram">
             <h3>D. Abhiram</h3>
-            <h1>Bs Computer Science</h1>
-            <p>Frontend & UI Design ,Backend & Compilation,Responsive Design & Testing</p>
+            <p>Frontend & UI Design</p>
           </div>
           <div class="team-member">
-            <img src="https://i.ibb.co/sd9H9TQb/adityahero.png" alt="G. Aditya Sai">
+            <img src="https://images.unsplash.com/photo-1552058544-f2b08422138a?w=400" alt="G. Aditya Sai">
             <h3>G. Aditya Sai</h3>
-            <h1>Bs Computer Science</h1>
             <p>Backend & Compilation</p>
           </div>
           <div class="team-member">
-            <img src="https://i.ibb.co/0p9Vdryb/1770267205259.png" alt="Durga Prasad">
+            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400" alt="Durga Prasad">
             <h3>Durga Prasad</h3>
-            <h1>Bs Computer Science</h1>
             <p>Theme & Animations</p>
           </div>
           <div class="team-member">
-            <img src="https://i.ibb.co/j9ZGMF8z/download.png" alt="T. Pavan">
+            <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400" alt="T. Pavan">
             <h3>T. Pavan</h3>
-            <h1>Bs Computer Science</h1>
             <p>Responsive Design & Testing</p>
           </div>
         </div>
